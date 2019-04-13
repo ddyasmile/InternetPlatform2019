@@ -45,4 +45,22 @@ public class WordLadderTest {
             assertThat(testWordLadder.get_ladder().size(), equalTo(result[i]));
         }
     }
+
+    @Test
+    public void testSpecialCase () {
+        String[][] test = {
+                {"code",""},
+                {"data","!"},
+                {"gap","gap$"},
+                {"$$$$","$$$$"},
+                {"!!","$$"},
+                {"",""}
+        };
+
+        WordLadder testWordLadder = new WordLadder("src/dictionary.txt");
+        for (Integer i = 0; i < 6; i++) {
+            testWordLadder.find_ladder(test[i][0], test[i][1]);
+            assertThat(testWordLadder.get_ladder().size(), equalTo(0));
+        }
+    }
 }

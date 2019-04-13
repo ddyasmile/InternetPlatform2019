@@ -42,7 +42,7 @@ public class WordLadderControllerTests {
         mockMvc.perform(get("/wordLadder").accept(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk())
                 .andDo(print())
-                .andExpect(content().string(equalTo("[\"world\"]")));
+                .andExpect(content().string(equalTo("[]")));
     }
 
     @Test
@@ -55,5 +55,22 @@ public class WordLadderControllerTests {
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andExpect(content().string(equalTo(result)));
+    }
+
+    @Test
+    public void testSpecialCase() throws Exception {
+        mockMvc.perform(get("/wordLadder")
+                .param("start", "code")
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(content().string(equalTo("[]")));
+        mockMvc.perform(get("/wordLadder")
+                .param("start", "$$$")
+                .param("end", "$$$")
+                .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(content().string(equalTo("[]")));
     }
 }

@@ -74,14 +74,30 @@ public class WordLadder {
         return res;
     }
 
+    private boolean isWord (String string) {
+        if (string.equals(""))
+            return false;
+
+        char[] chars = string.toCharArray();
+        for (char letter: chars) {
+            if (!(letter>='a'&&letter<='z'))
+                return false;
+        }
+
+        return true;
+    }
+
     public void find_ladder(String start, String end) {
         init_map();
         if (!this.ladderQ.isEmpty())
             this.ladderQ = new  LinkedList<>();
         if (!this.ladder.isEmpty())
             this.ladder = new Stack<>();
-        Stack<String> startStk = new Stack<>();
 
+        if (!isWord(start) || !isWord(end))
+            return;
+
+        Stack<String> startStk = new Stack<>();
         startStk.push(start);
         this.ladderQ.add(startStk);
         access_map(start);
