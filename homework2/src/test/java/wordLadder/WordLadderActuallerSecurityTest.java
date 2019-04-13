@@ -22,7 +22,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource(properties = {"management.port=0"})
-public class WordLadderActuallerTest {
+public class WordLadderActuallerSecurityTest {
 
     @LocalServerPort
     private int port;
@@ -34,10 +34,27 @@ public class WordLadderActuallerTest {
     private TestRestTemplate testRestTemplate;
 
     @Test
-    public void shouldReturn200WhenSendingRequestToManagementEndpoint() throws Exception {
-        @SuppressWarnings("rawtypes")
+    public void checkActuatorUnauthorized() throws Exception {
         ResponseEntity<Map> entity = this.testRestTemplate.getForEntity(
-                "http://localhost:" + this.mgt + "/actuator/info", Map.class);
+                "http://localhost:" + this.mgt + "/actuator", Map.class);
+
+        then(entity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    public void checkActuatorAuthorized() throws Exception {
+        ResponseEntity<Map> entity = this.testRestTemplate
+                .withBasicAuth("actuator", "password")
+                .getForEntity("http://localhost:" + this.mgt + "/actuator", Map.class);
+
+        then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void checkInfo() throws Exception {
+        ResponseEntity<Map> entity = this.testRestTemplate
+                .withBasicAuth("actuator", "password")
+                .getForEntity("http://localhost:" + this.mgt + "/actuator/info", Map.class);
 
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -47,9 +64,10 @@ public class WordLadderActuallerTest {
     }
 
     @Test
-    public void checkHealthStatus() throws Exception {
-        Map<?, ?> response = this.testRestTemplate.getForObject(
-                "http://localhost:" + this.mgt + "actuator/health", Map.class);
+    public void checkHealth() throws Exception {
+        Map<?, ?> response = this.testRestTemplate
+                .withBasicAuth("actuator", "password")
+                .getForObject("http://localhost:" + this.mgt + "actuator/health", Map.class);
 
         then(response.get("status")).isEqualTo("UP");
     }
@@ -58,14 +76,17 @@ public class WordLadderActuallerTest {
     public void checkHttptrace() throws Exception {
 
         String url = "http://localhost:" + this.port + "wordLadder";
-        this.testRestTemplate.getForObject(url, Stack.class);
+        this.testRestTemplate.withBasicAuth("user0", "password").getForEntity(url, Stack.class);
 
-        Map<?, ?> trace = this.testRestTemplate.getForObject(
-                "http://localhost:" + this.mgt + "actuator/httptrace", Map.class);
+        Map<?, ?> trace = this.testRestTemplate
+                .withBasicAuth("actuator", "password")
+                .getForObject("http://localhost:" + this.mgt + "actuator/httptrace", Map.class);
+
+        then(((Map<?, ArrayList<?>>)trace).size()).isEqualTo(1);
+
         Map<?, ?> request = (Map<?, ?>) ((Map<?, ArrayList<Map<?, ?>>>)trace).get("traces").get(0).get("request");
         Map<?, ?> response = (Map<?, ?>) ((Map<?, ArrayList<Map<?, ?>>>)trace).get("traces").get(0).get("response");
 
-        then(((Map<?, ArrayList<?>>)trace).size()).isEqualTo(1);
         then(request.get("method")).isEqualTo("GET");
         then(response.get("status")).isEqualTo(200);
     }
